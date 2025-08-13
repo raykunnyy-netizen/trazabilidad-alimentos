@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trazabilidad de Alimentos</title>
+    <!-- Incluyendo Tailwind CSS para un diseño moderno y responsive -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7f7f7;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            position: relative;
+            background-color: #fff;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            max-width: 900px;
+            width: 100%;
+        }
+        .node {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            background-color: #1a73e8;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 4px solid #ffffff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            transition: transform 0.2s ease-in-out;
+            z-index: 2;
+        }
+        .node:hover {
+            transform: scale(1.2);
+        }
+        .info-card {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 300px;
+            background-color: white;
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            padding: 1.5rem;
+            z-index: 10;
+            display: none;
+            flex-direction: column;
+            gap: 1rem;
+            text-align: left;
+            border-left: 5px solid #1a73e8;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translate(-50%, -50%) scale(0.9); }
+            to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        }
+        .info-card-close {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #666;
+        }
+        .info-card-title {
+            font-weight: 700;
+            font-size: 1.25rem;
+            color: #1a73e8;
+        }
+        .info-card-text {
+            color: #444;
+        }
+        .image-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 1rem;
+        }
+        /* Estilos responsivos */
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+            .info-card {
+                width: 90%;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
+
+    <div class="container relative flex flex-col items-center p-6 md:p-12">
+        <h1 class="text-3xl md:text-4xl font-bold text-center mb-8 text-gray-800">Recorrido del Lote</h1>
+
+        <!-- Imagen del esquema de trazabilidad -->
+        <div class="relative w-full max-w-full lg:max-w-4xl h-auto">
+            <img src="esquema.jpg"
+                 alt="Esquema de Trazabilidad de Alimentos"
+                 class="w-full h-auto rounded-lg shadow-lg">
+            
+            <!-- Nodos interactivos -->
+            <div id="node-agricultor" class="node" style="top: 25%; left: 15%;"></div>
+            <div id="node-procesadora" class="node" style="top: 55%; left: 35%;"></div>
+            <div id="node-transportista" class="node" style="top: 25%; left: 60%;"></div>
+            <div id="node-supermercado" class="node" style="top: 55%; left: 85%;"></div>
+            <div id="node-restaurante" class="node" style="top: 75%; left: 55%;"></div>
+        </div>
+
+        <!-- Tarjeta de información (inicialmente oculta) -->
+        <div id="info-card" class="info-card">
+            <button class="info-card-close" onclick="closeInfoCard()">&times;</button>
+            <h3 id="card-title" class="info-card-title"></h3>
+            <p id="card-text" class="info-card-text"></p>
+        </div>
+    </div>
+
+    <script>
+        // Datos de ejemplo para cada punto de la cadena de trazabilidad
+        const traceabilityData = {
+            'node-agricultor': {
+                title: 'Agricultor',
+                text: 'Productor: Finca El Mirador, Juan Pérez. Cultivo: Tomates cherry. Lote: T-2023-01. Fecha de cosecha: 15/08/2025.'
+            },
+            'node-procesadora': {
+                title: 'Empresa Procesadora',
+                text: 'Nombre de la empresa: Delicias Frescas S.A. Proceso: Lavado, selección y empaquetado. Lote procesado: P-2023-05. Fecha: 16/08/2025.'
+            },
+            'node-transportista': {
+                title: 'Empresa Transportadora',
+                text: 'Nombre: Transportes Rápidos C.A. Vehículo: Camión refrigerado #45. Temperatura: 4°C. Salida: 16/08/2025. Llegada: 17/08/2025.'
+            },
+            'node-supermercado': {
+                title: 'Supermercado',
+                text: 'Tienda: El Mercado Feliz. Ubicación: Av. Principal 123. Fecha de recepción: 17/08/2025. Fecha de venta: Disponible a partir del 18/08/2025.'
+            },
+            'node-restaurante': {
+                title: 'Restaurante',
+                text: 'Nombre: Pizzería La Tradicional. Ubicación: Calle de las Pizzas 56. Ingredientes del lote: Usado para la pizza "Marinera". Fecha de preparación: 18/08/2025.'
+            }
+        };
+
+        const infoCard = document.getElementById('info-card');
+        const cardTitle = document.getElementById('card-title');
+        const cardText = document.getElementById('card-text');
+
+        // Función para mostrar la tarjeta de información
+        function showInfoCard(nodeId) {
+            const data = traceabilityData[nodeId];
+            if (data) {
+                cardTitle.textContent = data.title;
+                cardText.textContent = data.text;
+                infoCard.style.display = 'flex';
+            }
+        }
+
+        // Función para cerrar la tarjeta de información
+        function closeInfoCard() {
+            infoCard.style.display = 'none';
+        }
+
+        // Asignar el evento click a cada nodo
+        document.querySelectorAll('.node').forEach(node => {
+            node.addEventListener('click', (event) => {
+                const nodeId = event.target.id;
+                showInfoCard(nodeId);
+            });
+        });
+    </script>
+
+</body>
+</html>
